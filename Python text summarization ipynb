@@ -1,0 +1,87 @@
+# ==============================
+# 📦 Install Dependencies
+# ==============================
+!pip uninstall -y transformers
+!pip install transformers==4.41.2 accelerate torch -q
+!pip install -q transformers torch
+
+# ==============================
+# 📚 Import Libraries
+# ==============================
+from transformers import pipeline
+from google.colab import files
+
+# ==============================
+# 🤖 Load Summarization Model
+# ==============================
+print("Loading model... (this may take a minute the first time)")
+summarizer = pipeline("summarization", model="t5-small")
+
+# ==============================
+# 🧠 Summarization Function
+# ==============================
+def summarize_text(text, max_length=130, min_length=30):
+    """
+    Summarizes long text using chunking.
+    """
+    max_chunk = 1000  # characters per chunk
+    chunks = [text[i:i+max_chunk] for i in range(0, len(text), max_chunk)]
+    
+    summary = ""
+    for chunk in chunks:
+        result = summarizer(
+            chunk,
+            max_length=max_length,
+            min_length=min_length,
+            do_sample=False
+        )
+        summary += result[0]['summary_text'] + " "
+    
+    return summary.strip()
+
+# ==============================
+# 📝 Choose Input Method
+# ==============================
+print("\nChoose input method:")
+print("1 - Paste text")
+print("2 - Upload .txt file")
+
+choice = input("Enter 1 or 2: ")
+
+if choice == "1":
+    article = input("\nPaste your article:\n")
+
+elif choice == "2":
+    print("\nUpload a .txt file:")
+    uploaded = files.upload()
+    
+    for filename in uploaded:
+        with open(filename, "r", encoding="utf-8") as f:
+            article = f.read()
+
+else:
+    print("Invalid choice. Using default sample text.")
+    article = """
+    Artificial Intelligence (AI) is rapidly transforming industries across the globe.
+    From healthcare to finance, AI applications are improving efficiency and enabling
+    new capabilities. Machine learning models can analyze massive datasets, identify
+    patterns, and make predictions with remarkable accuracy. However, concerns about
+    ethics, bias, and job displacement continue to grow. Experts emphasize the importance
+    of responsible AI development, transparency, and regulation.
+    """
+
+# ==============================
+# ✂️ Generate Summary
+# ==============================
+print("\n📄 ORIGINAL TEXT:\n")
+print(article[:1000] + "..." if len(article) > 1000 else article)
+
+summary = summarize_text(article)
+
+print("\n✂️ SUMMARY:\n")
+print(summary)
+
+# ==============================
+# ✅ Done
+# ==============================
+print("\n✅ Summarization complete!")
